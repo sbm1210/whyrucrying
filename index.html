@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#101418">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>왜 우냐</title>
+    <title>왜 우니</title>
     <style>
       :root {
         color-scheme: light;
@@ -180,28 +180,34 @@
         line-height: 1.5;
       }
 
-      .progress-panel {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        margin: 2px 0 14px;
-        padding: 14px;
-        border-radius: 8px;
+      .complete-spacer {
+        height: 96px;
+      }
+
+      .complete-bar {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(100%, 520px);
+        padding: 11px 16px max(14px, env(safe-area-inset-bottom));
         background: var(--surface);
-        border: 1px solid var(--line);
         backdrop-filter: blur(16px);
+        border-top: 1px solid var(--line);
+        z-index: 30;
       }
 
-      .progress-meta {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 10px;
+      .complete-bar .primary {
+        width: 100%;
+        min-height: 58px;
+        border-radius: 14px;
+        font-size: 22px;
+        font-weight: 900;
+        box-shadow: 0 10px 24px rgba(94, 67, 58, 0.18);
       }
 
-      .progress-meta strong {
-        font-size: 24px;
+      .history-dialog-body {
+        margin-top: 12px;
       }
 
       .progress-meta span {
@@ -229,23 +235,64 @@
         gap: 10px;
       }
 
-      .attempt {
+      .attempt-group {
         display: grid;
-        grid-template-columns: 34px 1fr;
-        gap: 12px;
-        width: 100%;
-        min-height: 76px;
-        padding: 13px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--panel);
-        color: var(--text);
-        text-align: left;
-        transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+        gap: 9px;
       }
 
-      .attempt:active {
-        transform: scale(0.99);
+      .attempt-group-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 0 4px 2px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .attempt-group-head h2 {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        color: var(--text);
+      }
+
+      .attempt-group-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 21px;
+        height: 21px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+        flex: none;
+      }
+
+      .attempt-group-head span {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--accent-2);
+      }
+
+      .attempt-group-list {
+        display: grid;
+        gap: 9px;
+      }
+
+      .attempt {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        overflow: hidden;
+        transition: border-color 160ms ease, background 160ms ease;
       }
 
       .attempt.is-checked {
@@ -253,16 +300,37 @@
         background: linear-gradient(180deg, rgba(121, 184, 167, 0.2), var(--panel));
       }
 
+      .attempt-main {
+        display: grid;
+        grid-template-columns: 30px 1fr;
+        gap: 12px;
+        align-items: center;
+        min-height: 58px;
+        padding: 11px 8px 11px 13px;
+        background: transparent;
+        color: var(--text);
+        text-align: left;
+        transition: transform 160ms ease;
+      }
+
+      .attempt-main:active {
+        transform: scale(0.99);
+      }
+
       .attempt-check {
         display: grid;
         place-items: center;
-        width: 34px;
-        height: 34px;
-        border: 2px solid rgba(58, 78, 84, 0.2);
+        width: 30px;
+        height: 30px;
+        border: 2px solid rgba(58, 78, 84, 0.3);
         border-radius: 8px;
         color: #ffffff;
         background: transparent;
         font-weight: 900;
+      }
+
+      :root[data-theme="dark"] .attempt-check {
+        border-color: rgba(255, 255, 255, 0.32);
       }
 
       .attempt.is-checked .attempt-check {
@@ -283,7 +351,29 @@
       .attempt-copy small {
         color: var(--muted);
         font-size: 13px;
-        line-height: 1.35;
+        line-height: 1.4;
+      }
+
+      .attempt-hint {
+        align-self: stretch;
+        width: 46px;
+        display: grid;
+        place-items: center;
+        border-left: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        font-size: 17px;
+        font-weight: 800;
+        line-height: 1;
+        transition: color 160ms ease, background 160ms ease;
+      }
+
+      .attempt-hint:active {
+        background: var(--soft);
+      }
+
+      .attempt.is-expanded .attempt-hint {
+        color: var(--accent);
       }
 
       .memo-panel,
@@ -345,7 +435,7 @@
       }
 
       .care-note {
-        margin-top: 10px;
+        margin: 0 0 14px;
       }
 
       .care-note strong {
@@ -629,6 +719,24 @@
         line-height: 1.45;
       }
 
+      .complete-copy {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .complete-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .complete-actions button {
+        min-height: 48px;
+      }
+
       .dialog-actions {
         margin-top: 10px;
         justify-content: flex-end;
@@ -650,7 +758,7 @@
   const UI_COPY = {
     eyebrow: "Why R U crying?",
     reset: "또 운다",
-    title: "왜 우냐",
+    title: "왜 우니",
     complete: "그쳤다!!!!",
     memoPlaceholder: "예: 기저귀 확인 후에도 계속 울었고, 안아서 조용한 곳에 가니 조금 진정됨",
   };
@@ -757,6 +865,21 @@
       hint: "머리카락이 손가락이나 발가락에 감겼는지, 작은 상처나 끼임이 없는지 살펴봐요.",
     },
   ];
+
+  const ATTEMPT_GROUPS = [
+    { id: "body", title: "몸이 불편한가" },
+    { id: "env", title: "환경이 거슬리나" },
+    { id: "feel", title: "마음이 불편한가" },
+    { id: "pain", title: "아프거나 이상한가" },
+    { id: "custom", title: "직접 추가한 항목" },
+  ];
+
+  const ATTEMPT_GROUP = {
+    diaper: "body", hungry: "body", burp: "body", gas: "body", sleepy: "body", overtired: "body",
+    hot: "env", cold: "env", clothes: "env", position: "env", noise: "env", light: "env",
+    hold: "feel", unfamiliar: "feel", startled: "feel", want: "feel",
+    gums: "pain", skin: "pain", pain: "pain", stuck: "pain",
+  };
 
   function normalizeChecklistItems(items) {
     if (!Array.isArray(items)) {
@@ -994,6 +1117,7 @@
 
     let state = safeRead() || createAppState();
     let settingsSectionOpen = { default: true, custom: true };
+    let expandedHints = new Set();
 
     state.items = normalizeChecklistItems(state.items);
     state.session = normalizeSession(state.session, state.items);
@@ -1026,13 +1150,14 @@
     }
 
     function renderThemeButton(className = "theme-toggle") {
-      const label = state.theme === "dark" ? "일반 모드" : "다크모드";
+      const label = state.theme === "dark" ? "일반 모드" : "다크 모드";
       return `<button class="${className}" data-theme-toggle>${label}</button>`;
     }
 
     function renderHeadActions() {
       return `
         <div class="head-actions">
+          <button class="theme-toggle" data-history>이력</button>
           ${renderThemeButton()}
           <button class="theme-toggle" data-settings>설정</button>
         </div>
@@ -1040,18 +1165,23 @@
     }
 
     function renderAttempts() {
-      return getVisibleAttempts(state.session, state.items)
-        .map(
-          (item) => `
-            <button class="attempt ${item.checked ? "is-checked" : ""}" data-toggle="${item.id}">
-              <span class="attempt-check" aria-hidden="true">${item.checked ? "✓" : ""}</span>
-              <span class="attempt-copy">
-                <strong>${escapeHtml(item.label)}</strong>
-                <small>${escapeHtml(item.hint)}</small>
-              </span>
-            </button>
-          `
-        )
+      const visible = getVisibleAttempts(state.session, state.items);
+      return visible
+        .map((item) => {
+          const expanded = expandedHints.has(item.id);
+          return `
+            <div class="attempt ${item.checked ? "is-checked" : ""} ${expanded ? "is-expanded" : ""}">
+              <button class="attempt-main" data-toggle="${item.id}">
+                <span class="attempt-check" aria-hidden="true">${item.checked ? "✓" : ""}</span>
+                <span class="attempt-copy">
+                  <strong>${escapeHtml(item.label)}</strong>
+                  ${expanded ? `<small>${escapeHtml(item.hint)}</small>` : ""}
+                </span>
+              </button>
+              <button class="attempt-hint" data-hint="${item.id}" aria-expanded="${expanded}" aria-label="${expanded ? "설명 닫기" : "설명 보기"}">${expanded ? "✕" : "?"}</button>
+            </div>
+          `;
+        })
         .join("");
     }
 
@@ -1094,12 +1224,25 @@
       const items = normalizeChecklistItems(state.items);
       const defaultItems = items.filter((item) => !item.custom);
       const customItems = items.filter((item) => item.custom);
+      const backupCode = btoa(
+        unescape(
+          encodeURIComponent(
+            JSON.stringify({
+              session: state.session,
+              history: state.history,
+              active: state.active,
+              theme: state.theme,
+              items: state.items,
+            })
+          )
+        )
+      );
 
       return `
         <dialog id="settingsDialog" class="settings-dialog">
           <form method="dialog">
             <div class="dialog-head">
-              <strong>체크리스트 설정</strong>
+              <strong>설정</strong>
               <button class="icon-btn" value="cancel" aria-label="닫기">×</button>
             </div>
             ${renderSettingsSection("default", "기본 항목", defaultItems, "기본 항목이 없어요.")}
@@ -1109,6 +1252,51 @@
               <input id="newItemLabel" placeholder="예: 엄마랑 더 있고 싶니?">
               <textarea id="newItemHint" rows="3" placeholder="예: 잠깐 떨어진 뒤 울기 시작했는지 보고, 가까이 있어 주면 진정되는지 확인해요."></textarea>
               <button class="primary add-item-btn" id="addItemBtn" value="default">추가</button>
+            </div>
+            <details class="settings-section">
+              <summary><span>백업 / 가져오기</span></summary>
+              <div class="settings-list">
+                <p class="settings-empty">아래 코드를 복사해 두면 다른 기기로 이력을 옆길 수 있어요. 가져올 코드를 붙여넣고 [가져오기]를 눌러요.</p>
+                <textarea id="backupText" rows="4">${escapeHtml(backupCode)}</textarea>
+                <button class="secondary add-item-btn" id="importBtn" value="default">가져오기</button>
+              </div>
+            </details>
+          </form>
+        </dialog>
+      `;
+    }
+
+    function renderHistoryDialog() {
+      return `
+        <dialog id="historyDialog" class="settings-dialog">
+          <form method="dialog">
+            <div class="dialog-head">
+              <strong>이력 ${state.history.length}건</strong>
+              <button class="icon-btn" value="cancel" aria-label="닫기">×</button>
+            </div>
+            <div class="history-dialog-body">
+              ${renderHistory()}
+            </div>
+          </form>
+        </dialog>
+      `;
+    }
+
+    function renderCompleteDialog() {
+      return `
+        <dialog id="completeDialog" class="settings-dialog complete-dialog">
+          <form method="dialog">
+            <div class="dialog-head">
+              <strong>무엇이 통했나요?</strong>
+              <button class="icon-btn" value="cancel" aria-label="닫기">×</button>
+            </div>
+            <p class="complete-copy">짧게 남겨 두면 다음 울음 때 바로 참고할 수 있어요.</p>
+            <textarea id="completeMemo" rows="5" placeholder="${UI_COPY.memoPlaceholder}">${escapeHtml(
+              state.session.memo || ""
+            )}</textarea>
+            <div class="complete-actions">
+              <button class="secondary" data-complete-skip value="default">메모 없이 끝내기</button>
+              <button class="primary" data-complete-save value="default">저장하고 끝내기</button>
             </div>
           </form>
         </dialog>
@@ -1153,7 +1341,6 @@
 
     function render() {
       applyTheme();
-      const progress = getProgress(state.session, state.items);
       const started = formatClock(state.session.startedAt);
 
       if (!state.active) {
@@ -1179,14 +1366,8 @@
               </div>
             </main>
 
-            <section class="history">
-              <div class="section-head">
-                <h2>이력</h2>
-                <span>${state.history.length}개</span>
-              </div>
-              ${renderHistory()}
-            </section>
             ${renderSettingsDialog()}
+            ${renderHistoryDialog()}
           </div>
         `;
         return;
@@ -1209,78 +1390,36 @@
               : ""
           }
 
-          <section class="progress-panel" aria-label="체크 진행률">
-            <div class="progress-meta">
-              <strong>${progress.done}/${progress.total}</strong>
-              <span>${progress.percent}% 체크</span>
-            </div>
-            <div class="bar"><span style="width:${progress.percent}%"></span></div>
+          <section class="care-note">
+            <strong>바로 도움을 받아야 할 때</strong>
+            <p>숨쉬기 힘들어 보이거나, 입술이 파랗거나, 고열/축 처짐/평소와 다른 울음이 있으면 체크리스트보다 의료진 연락이 먼저입니다.</p>
           </section>
 
           <main class="attempt-list">
             ${renderAttempts()}
           </main>
 
-          <section class="memo-panel">
-            <label for="memo">메모</label>
-            <textarea id="memo" rows="4" placeholder="${UI_COPY.memoPlaceholder}">${escapeHtml(
-              state.session.memo || ""
-            )}</textarea>
-          </section>
-
-          <div class="primary-actions">
-            <button class="secondary" data-export>백업 코드</button>
+          <div class="complete-bar">
             <button class="primary" data-complete>${UI_COPY.complete}</button>
           </div>
 
-          <section class="care-note">
-            <strong>바로 도움을 받아야 할 때</strong>
-            <p>숨쉬기 힘들어 보이거나, 입술이 파랗거나, 고열/축 처짐/평소와 다른 울음이 있으면 체크리스트보다 의료진 연락이 먼저입니다.</p>
-          </section>
-
-          <section class="history">
-            <div class="section-head">
-              <h2>이력</h2>
-              <span>${state.history.length}개</span>
-            </div>
-            ${renderHistory()}
-          </section>
+          <div class="complete-spacer"></div>
         </div>
 
-        <dialog id="backupDialog" class="backup-dialog">
-          <form method="dialog">
-            <div class="dialog-head">
-              <strong>백업 / 가져오기</strong>
-              <button class="icon-btn" value="cancel" aria-label="닫기">×</button>
-            </div>
-            <p>아래 코드를 복사해 두면 다른 브라우저에서 이력을 옮길 수 있어요.</p>
-            <textarea id="backupText" rows="5"></textarea>
-            <div class="dialog-actions">
-              <button value="cancel">닫기</button>
-              <button id="importBtn" value="default">가져오기</button>
-            </div>
-          </form>
-        </dialog>
         ${renderSettingsDialog()}
+        ${renderHistoryDialog()}
+        ${renderCompleteDialog()}
       `;
-
-      const memo = root.querySelector("#memo");
-      if (memo) {
-        memo.addEventListener("input", (event) => {
-          state.session = setMemo(state.session, event.target.value);
-          safeWrite(getPersistedState());
-        });
-      }
     }
 
-    function closeSettingsDialogFromBackdrop(event) {
-      if (event.target.id !== "settingsDialog") return false;
+    function closeDialogFromBackdrop(event) {
+      if (!["settingsDialog", "historyDialog", "completeDialog"].includes(event.target.id)) return false;
       event.target.close();
       return true;
     }
 
     root.addEventListener("click", (event) => {
-      if (closeSettingsDialogFromBackdrop(event)) return;
+      if (closeDialogFromBackdrop(event)) return;
 
       const toggle = event.target.closest("[data-toggle]");
       if (toggle) {
@@ -1288,6 +1427,15 @@
           ...state,
           session: toggleAttempt(state.session, toggle.dataset.toggle),
         });
+        return;
+      }
+
+      const hint = event.target.closest("[data-hint]");
+      if (hint) {
+        const id = hint.dataset.hint;
+        if (expandedHints.has(id)) expandedHints.delete(id);
+        else expandedHints.add(id);
+        render();
         return;
       }
 
@@ -1308,6 +1456,11 @@
 
       if (event.target.closest("[data-settings]")) {
         root.querySelector("#settingsDialog").showModal();
+        return;
+      }
+
+      if (event.target.closest("[data-history]")) {
+        root.querySelector("#historyDialog").showModal();
         return;
       }
 
@@ -1343,7 +1496,24 @@
       }
 
       if (event.target.closest("[data-complete]")) {
-        commit(completeActiveSession(state));
+        const dialog = root.querySelector("#completeDialog");
+        dialog.showModal();
+        setTimeout(() => root.querySelector("#completeMemo")?.focus(), 0);
+        return;
+      }
+
+      if (event.target.closest("[data-complete-save]")) {
+        event.preventDefault();
+        const memo = root.querySelector("#completeMemo")?.value.trim() || "";
+        root.querySelector("#completeDialog")?.close();
+        commit(completeActiveSession(state, { memo }));
+        return;
+      }
+
+      if (event.target.closest("[data-complete-skip]")) {
+        event.preventDefault();
+        root.querySelector("#completeDialog")?.close();
+        commit(completeActiveSession(state, { memo: "" }));
         return;
       }
 
@@ -1354,27 +1524,6 @@
           history: state.history.filter((entry) => entry.id !== del.dataset.delete),
         });
         return;
-      }
-
-      if (event.target.closest("[data-export]")) {
-        const dialog = root.querySelector("#backupDialog");
-        const text = root.querySelector("#backupText");
-        text.value = btoa(
-          unescape(
-            encodeURIComponent(
-              JSON.stringify({
-                session: state.session,
-                history: state.history,
-                active: state.active,
-                theme: state.theme,
-                items: state.items,
-              })
-            )
-          )
-        );
-        dialog.showModal();
-        text.focus();
-        text.select();
       }
     });
 
@@ -1586,7 +1735,7 @@
         if (!Array.isArray(imported.history) || !imported.session) {
           throw new Error("Invalid backup");
         }
-        root.querySelector("#backupDialog").close();
+        root.querySelector("#settingsDialog").close();
         commit({
           ...state,
           session: imported.session,
