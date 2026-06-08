@@ -9,17 +9,38 @@
     <title>왜 우냐</title>
     <style>
       :root {
-        color-scheme: dark;
-        --bg: #101418;
-        --panel: #181e24;
-        --panel-2: #202831;
-        --text: #f3f0e8;
-        --muted: #9da8b2;
-        --line: rgba(255, 255, 255, 0.1);
-        --accent: #f0bf54;
-        --accent-2: #6db5a3;
-        --danger: #ef7c6b;
+        color-scheme: light;
+        --bg: #f6f8f5;
+        --panel: #ffffff;
+        --panel-2: #eef5f1;
+        --text: #27343a;
+        --muted: #68787a;
+        --line: rgba(58, 78, 84, 0.14);
+        --accent: #e88873;
+        --accent-2: #79b8a7;
+        --danger: #c96d62;
+        --page-top: #fbfbf7;
+        --page-bottom: #edf5f1;
+        --soft: rgba(255, 255, 255, 0.78);
+        --surface: rgba(255, 255, 255, 0.74);
         font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #202a2f;
+        --panel: #2a353b;
+        --panel-2: #243037;
+        --text: #f6f3ea;
+        --muted: #b9c3c5;
+        --line: rgba(255, 255, 255, 0.14);
+        --accent: #e69a82;
+        --accent-2: #8cc7b7;
+        --danger: #e19a8f;
+        --page-top: #263238;
+        --page-bottom: #1d282d;
+        --soft: rgba(255, 255, 255, 0.09);
+        --surface: rgba(255, 255, 255, 0.08);
       }
 
       * {
@@ -30,9 +51,11 @@
         margin: 0;
         min-height: 100svh;
         background:
-          radial-gradient(circle at 20% 0%, rgba(240, 191, 84, 0.13), transparent 28rem),
-          linear-gradient(180deg, #0c0f13 0%, var(--bg) 42%, #0f1515 100%);
+          radial-gradient(circle at 15% 0%, rgba(232, 136, 115, 0.22), transparent 24rem),
+          radial-gradient(circle at 90% 12%, rgba(121, 184, 167, 0.2), transparent 22rem),
+          linear-gradient(180deg, var(--page-top) 0%, var(--bg) 48%, var(--page-bottom) 100%);
         color: var(--text);
+        transition: background 180ms ease, color 180ms ease;
       }
 
       button,
@@ -88,6 +111,7 @@
       }
 
       .reset-btn,
+      .theme-toggle,
       .secondary,
       .primary,
       .dialog-actions button {
@@ -98,29 +122,66 @@
       }
 
       .reset-btn,
+      .theme-toggle,
       .secondary,
       .dialog-actions button {
-        background: rgba(255, 255, 255, 0.08);
+        background: var(--soft);
         color: var(--text);
+        border: 1px solid var(--line);
+      }
+
+      .theme-toggle {
+        white-space: nowrap;
+      }
+
+      .home-shell {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+
+      .start-panel {
+        display: grid;
+        align-content: center;
+        min-height: min(58svh, 520px);
+      }
+
+      .start-actions {
+        display: block;
+      }
+
+      .start-btn {
+        width: 100%;
+        min-height: 86px;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #ffffff;
+        font-size: clamp(30px, 10vw, 50px);
+        font-weight: 900;
+        letter-spacing: 0;
+        box-shadow: 0 14px 32px rgba(94, 67, 58, 0.16);
       }
 
       .warn,
       .care-note {
-        border: 1px solid rgba(239, 124, 107, 0.34);
+        border: 1px solid rgba(201, 109, 98, 0.22);
         border-radius: 8px;
-        background: rgba(239, 124, 107, 0.1);
+        background: rgba(255, 246, 242, 0.84);
         padding: 12px;
-        color: #ffd2ca;
+        color: #81514b;
         font-size: 13px;
         line-height: 1.5;
       }
 
       .progress-panel {
+        position: sticky;
+        top: 0;
+        z-index: 20;
         margin: 2px 0 14px;
         padding: 14px;
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--surface);
         border: 1px solid var(--line);
+        backdrop-filter: blur(16px);
       }
 
       .progress-meta {
@@ -144,7 +205,7 @@
         height: 10px;
         overflow: hidden;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(58, 78, 84, 0.1);
       }
 
       .bar span {
@@ -181,7 +242,7 @@
 
       .attempt.is-checked {
         border-color: rgba(109, 181, 163, 0.65);
-        background: linear-gradient(180deg, rgba(109, 181, 163, 0.14), var(--panel));
+        background: linear-gradient(180deg, rgba(121, 184, 167, 0.2), var(--panel));
       }
 
       .attempt-check {
@@ -189,9 +250,9 @@
         place-items: center;
         width: 34px;
         height: 34px;
-        border: 2px solid rgba(255, 255, 255, 0.24);
+        border: 2px solid rgba(58, 78, 84, 0.2);
         border-radius: 8px;
-        color: #101418;
+        color: #ffffff;
         background: transparent;
         font-weight: 900;
       }
@@ -258,7 +319,7 @@
 
       .primary {
         background: var(--accent);
-        color: #18130a;
+        color: #ffffff;
       }
 
       .care-note {
@@ -283,7 +344,7 @@
         padding: 13px;
         border: 1px solid var(--line);
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.045);
+        background: var(--surface);
       }
 
       .history-item + .history-item {
@@ -314,7 +375,7 @@
         width: 32px;
         height: 32px;
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.08);
+        background: var(--soft);
         color: var(--text);
         font-size: 22px;
         line-height: 1;
@@ -331,7 +392,7 @@
       .history-tags em {
         border-radius: 999px;
         background: rgba(109, 181, 163, 0.16);
-        color: #bde8dd;
+        color: #356c61;
         padding: 5px 8px;
         font-size: 12px;
         font-style: normal;
@@ -339,7 +400,7 @@
 
       .history-memo {
         margin-top: 10px;
-        color: #ddd7cb;
+        color: #48585d;
         font-size: 14px;
         line-height: 1.5;
         white-space: pre-wrap;
@@ -349,13 +410,13 @@
         width: min(calc(100% - 28px), 480px);
         border: 1px solid var(--line);
         border-radius: 8px;
-        background: #151b21;
+        background: #ffffff;
         color: var(--text);
         padding: 0;
       }
 
       .backup-dialog::backdrop {
-        background: rgba(0, 0, 0, 0.55);
+        background: rgba(39, 52, 58, 0.28);
       }
 
       .backup-dialog form {
@@ -574,6 +635,38 @@
     };
   }
 
+  function createAppState(now = Date.now()) {
+    return {
+      session: createSession(now),
+      history: [],
+      storageOk: true,
+      active: false,
+      theme: "light",
+    };
+  }
+
+  function startSession(state, now = Date.now()) {
+    return {
+      ...state,
+      active: true,
+      session: createSession(now),
+    };
+  }
+
+  function completeActiveSession(state, options = {}) {
+    const entry = completeSession(state.session, options);
+    return {
+      ...state,
+      active: false,
+      session: createSession(options.nextStartedAt || Date.now()),
+      history: [entry, ...(state.history || [])].slice(0, 100),
+    };
+  }
+
+  function toggleThemeValue(theme) {
+    return theme === "dark" ? "light" : "dark";
+  }
+
   function safeRead() {
     try {
       const raw = global.localStorage && global.localStorage.getItem(STORAGE_KEY);
@@ -624,22 +717,36 @@
     const root = document.querySelector("#app");
     if (!root) return;
 
-    let state =
-      safeRead() || {
-        session: createSession(),
-        history: [],
-        storageOk: true,
-      };
+    let state = safeRead() || createAppState();
 
     state.session = normalizeSession(state.session);
+    if (typeof state.active !== "boolean") state.active = false;
+    if (state.theme !== "dark") state.theme = "light";
+
+    function getPersistedState() {
+      return {
+        session: state.session,
+        history: state.history,
+        active: state.active,
+        theme: state.theme,
+      };
+    }
+
+    function applyTheme() {
+      document.documentElement.dataset.theme = state.theme;
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", state.theme === "dark" ? "#202a2f" : "#f6f8f5");
+    }
 
     function commit(next) {
       state = next;
-      state.storageOk = safeWrite({
-        session: state.session,
-        history: state.history,
-      });
+      state.storageOk = safeWrite(getPersistedState());
       render();
+    }
+
+    function renderThemeButton(className = "theme-toggle") {
+      const label = state.theme === "dark" ? "일반 모드" : "다크모드";
+      return `<button class="${className}" data-theme-toggle>${label}</button>`;
     }
 
     function renderAttempts() {
@@ -695,8 +802,44 @@
     }
 
     function render() {
+      applyTheme();
       const progress = getProgress(state.session);
       const started = formatClock(state.session.startedAt);
+
+      if (!state.active) {
+        root.innerHTML = `
+          <div class="shell home-shell">
+            <header class="app-head">
+              <div>
+                <p class="eyebrow">${UI_COPY.eyebrow}</p>
+                <h1>${UI_COPY.title}</h1>
+              </div>
+              ${renderThemeButton()}
+            </header>
+
+            ${
+              state.storageOk === false
+                ? `<div class="warn">이 브라우저에서 저장이 막혀 있어요. 홈 화면에 추가한 앱이나 일반 탭에서 다시 열어 보세요.</div>`
+                : ""
+            }
+
+            <main class="start-panel">
+              <div class="start-actions">
+                <button class="start-btn" data-start>${UI_COPY.reset}</button>
+              </div>
+            </main>
+
+            <section class="history">
+              <div class="section-head">
+                <h2>이력</h2>
+                <span>${state.history.length}개</span>
+              </div>
+              ${renderHistory()}
+            </section>
+          </div>
+        `;
+        return;
+      }
 
       root.innerHTML = `
         <div class="shell">
@@ -706,7 +849,7 @@
               <h1>${UI_COPY.title}</h1>
               <span class="started">시작 ${started}</span>
             </div>
-            <button class="reset-btn" data-reset>${UI_COPY.reset}</button>
+            ${renderThemeButton()}
           </header>
 
           ${
@@ -770,10 +913,12 @@
       `;
 
       const memo = root.querySelector("#memo");
-      memo.addEventListener("input", (event) => {
-        state.session = setMemo(state.session, event.target.value);
-        safeWrite({ session: state.session, history: state.history });
-      });
+      if (memo) {
+        memo.addEventListener("input", (event) => {
+          state.session = setMemo(state.session, event.target.value);
+          safeWrite(getPersistedState());
+        });
+      }
     }
 
     root.addEventListener("click", (event) => {
@@ -791,13 +936,18 @@
         return;
       }
 
+      if (event.target.closest("[data-start]")) {
+        commit(startSession(state));
+        return;
+      }
+
+      if (event.target.closest("[data-theme-toggle]")) {
+        commit({ ...state, theme: toggleThemeValue(state.theme) });
+        return;
+      }
+
       if (event.target.closest("[data-complete]")) {
-        const entry = completeSession(state.session);
-        commit({
-          ...state,
-          session: createSession(),
-          history: [entry, ...state.history].slice(0, 100),
-        });
+        commit(completeActiveSession(state));
         return;
       }
 
@@ -819,6 +969,8 @@
               JSON.stringify({
                 session: state.session,
                 history: state.history,
+                active: state.active,
+                theme: state.theme,
               })
             )
           )
@@ -843,6 +995,8 @@
           ...state,
           session: imported.session,
           history: imported.history,
+          active: typeof imported.active === "boolean" ? imported.active : false,
+          theme: imported.theme === "dark" ? "dark" : "light",
         });
       } catch (error) {
         alert("백업 코드가 올바르지 않아요.");
@@ -855,8 +1009,12 @@
   const api = {
     ATTEMPTS,
     UI_COPY,
+    completeActiveSession,
+    createAppState,
     createSession,
     normalizeSession,
+    startSession,
+    toggleThemeValue,
     toggleAttempt,
     setMemo,
     getProgress,
