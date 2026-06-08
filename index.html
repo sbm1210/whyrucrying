@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#101418">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>왜 우니</title>
+    <title>왜 우니?</title>
     <style>
       :root {
         color-scheme: light;
@@ -139,6 +139,10 @@
       }
 
       .theme-toggle {
+        white-space: nowrap;
+      }
+
+      .no-break {
         white-space: nowrap;
       }
 
@@ -518,23 +522,6 @@
         white-space: pre-wrap;
       }
 
-      .backup-dialog {
-        width: min(calc(100% - 28px), 480px);
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: #ffffff;
-        color: var(--text);
-        padding: 0;
-      }
-
-      .backup-dialog::backdrop {
-        background: rgba(39, 52, 58, 0.28);
-      }
-
-      .backup-dialog form {
-        padding: 16px;
-      }
-
       .settings-dialog {
         width: min(calc(100% - 28px), 520px);
         max-height: min(82svh, 760px);
@@ -552,6 +539,16 @@
 
       .settings-dialog form {
         padding: 16px;
+      }
+
+      .settings-dialog .dialog-head {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        margin: -16px -16px 12px;
+        padding: 16px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
       }
 
       .settings-section {
@@ -597,6 +594,17 @@
         color: var(--muted);
         font-size: 12px;
         font-weight: 800;
+      }
+
+      .summary-action {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0 10px;
+        background: var(--soft);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 900;
       }
 
       .settings-list {
@@ -676,6 +684,13 @@
         line-height: 1.35;
       }
 
+      .setting-row-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
       .switch {
         display: grid;
         justify-items: center;
@@ -690,6 +705,23 @@
         width: 22px;
         height: 22px;
         accent-color: var(--accent-2);
+      }
+
+      .danger-btn {
+        min-height: 34px;
+        border: 1px solid rgba(201, 109, 98, 0.28);
+        border-radius: 8px;
+        padding: 0 10px;
+        background: rgba(255, 246, 242, 0.9);
+        color: #9a4d44;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .confirm-danger {
+        min-height: 48px;
+        background: var(--danger);
+        color: #ffffff;
       }
 
       .add-item-box {
@@ -712,11 +744,39 @@
         gap: 10px;
       }
 
+      .dialog-head-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .compact-btn {
+        min-height: 34px;
+        padding: 0 12px;
+      }
+
       .backup-dialog p {
         margin: 10px 0;
         color: var(--muted);
         font-size: 13px;
         line-height: 1.45;
+      }
+
+      .backup-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .backup-actions .primary {
+        grid-column: 1 / -1;
+        min-height: 48px;
+      }
+
+      .backup-actions .secondary {
+        min-height: 44px;
+        padding: 0 10px;
       }
 
       .complete-copy {
@@ -757,8 +817,8 @@
 
   const UI_COPY = {
     eyebrow: "Why R U crying?",
-    reset: "또 운다",
-    title: "왜 우니",
+    reset: "또 운다!",
+    title: "왜 우니?",
     complete: "그쳤다!!!!",
     memoPlaceholder: "예: 기저귀 확인 후에도 계속 울었고, 안아서 조용한 곳에 가니 조금 진정됨",
   };
@@ -771,18 +831,13 @@
     },
     {
       id: "hot",
-      label: "덥니?",
-      hint: "목덜미와 등을 만져 보고, 옷이나 이불이 너무 두껍지 않은지 확인해요.",
-    },
-    {
-      id: "cold",
-      label: "춥니?",
-      hint: "손발이 차가운지, 실내 온도와 옷차림이 괜찮은지 확인해요.",
+      label: "춥거나 덥니?",
+      hint: "목덜미와 등을 만져 보고, 손발·옷차림·이불·실내 온도가 괜찮은지 확인해요.",
     },
     {
       id: "clothes",
-      label: "옷이 불편하니?",
-      hint: "허리밴드, 양말, 옷 태그, 단추, 지퍼가 조이거나 찌르지 않는지 확인해요.",
+      label: "옷이나 몸에 조이는 게 있니?",
+      hint: "옷 태그, 허리밴드, 양말, 단추, 지퍼를 풀어 보고, 머리카락·실·끈이 손가락이나 발가락에 감기지 않았는지 살펴봐요.",
     },
     {
       id: "position",
@@ -795,14 +850,9 @@
       hint: "마지막 수유나 식사 시간과 양을 떠올려 보고, 먹고 싶어 하는 신호가 있는지 확인해요.",
     },
     {
-      id: "burp",
-      label: "트림하고 싶니?",
-      hint: "최근에 먹었다면 세워 안고 등을 부드럽게 토닥여 봐요.",
-    },
-    {
       id: "gas",
-      label: "배에 가스가 찼니?",
-      hint: "배가 빵빵한지 보고, 다리를 천천히 움직이거나 배를 부드럽게 마사지해요.",
+      label: "배가 불편하니?",
+      hint: "최근에 먹었다면 세워 안고 등을 토닥여 보고, 배가 빵빵하면 다리를 천천히 움직이거나 배를 부드럽게 마사지해요.",
     },
     {
       id: "hold",
@@ -810,39 +860,9 @@
       hint: "가까이 안아 주고 작게 말을 걸었을 때 진정되는지 확인해요.",
     },
     {
-      id: "noise",
-      label: "시끄러워서 힘드니?",
-      hint: "TV, 대화 소리, 생활 소음이 큰지 보고 조용한 곳으로 옮겨 봐요.",
-    },
-    {
-      id: "light",
-      label: "빛이 너무 밝니?",
-      hint: "조명을 낮추거나 커튼을 쳐서 눈부시지 않은 환경을 만들어 봐요.",
-    },
-    {
       id: "sleepy",
       label: "졸리니?",
-      hint: "마지막 낮잠이나 밤잠 시간을 떠올려 보고, 졸린 신호가 있었는지 확인해요.",
-    },
-    {
-      id: "overtired",
-      label: "너무 피곤하니?",
-      hint: "오래 깨어 있었거나 자극이 많았다면, 조용하고 어두운 환경에서 쉬게 해요.",
-    },
-    {
-      id: "unfamiliar",
-      label: "낯설어서 불안하니?",
-      hint: "낯선 장소, 낯선 사람, 갑작스러운 변화가 있었는지 떠올려 봐요.",
-    },
-    {
-      id: "startled",
-      label: "놀랐니?",
-      hint: "큰 소리, 갑작스러운 움직임, 낯선 상황 이후 울기 시작했는지 확인해요.",
-    },
-    {
-      id: "want",
-      label: "원하는 게 있니?",
-      hint: "장난감, 음식, 이동, 놀이 중단처럼 아이가 원하던 것이 있었는지 살펴봐요.",
+      hint: "졸리거나 너무 피곤해 보이면 조용하고 어두운 곳에서 쉬게 해요.",
     },
     {
       id: "gums",
@@ -851,18 +871,8 @@
     },
     {
       id: "skin",
-      label: "피부가 불편하니?",
-      hint: "발진, 땀띠, 벌레 물림, 옷에 쓸린 자국이 있는지 살펴봐요.",
-    },
-    {
-      id: "pain",
-      label: "어딘가 아프니?",
-      hint: "특정 부위를 만지면 더 우는지, 평소와 다른 자세나 움직임이 있는지 확인해요.",
-    },
-    {
-      id: "stuck",
-      label: "어디 끼거나 감긴 게 있니?",
-      hint: "머리카락이 손가락이나 발가락에 감겼는지, 작은 상처나 끼임이 없는지 살펴봐요.",
+      label: "피부에 자극이 있니?",
+      hint: "발진, 땀띠, 벌레 물림, 쓸린 자국이 보이면 옷을 느슨하게 하고 자극을 줄여요.",
     },
   ];
 
@@ -875,10 +885,17 @@
   ];
 
   const ATTEMPT_GROUP = {
-    diaper: "body", hungry: "body", burp: "body", gas: "body", sleepy: "body", overtired: "body",
-    hot: "env", cold: "env", clothes: "env", position: "env", noise: "env", light: "env",
-    hold: "feel", unfamiliar: "feel", startled: "feel", want: "feel",
-    gums: "pain", skin: "pain", pain: "pain", stuck: "pain",
+    diaper: "body", hungry: "body", gas: "body", sleepy: "body",
+    hot: "env", clothes: "env", position: "env",
+    hold: "feel",
+    gums: "pain", skin: "pain",
+  };
+
+  const MERGED_ATTEMPT_ALIASES = {
+    hot: ["cold"],
+    clothes: ["stuck"],
+    gas: ["burp"],
+    sleepy: ["overtired", "noise", "light"],
   };
 
   function normalizeChecklistItems(items) {
@@ -938,6 +955,10 @@
         ? session.attempts.map((item) => [item.id, item])
         : []
     );
+    const wasChecked = (id) =>
+      [id, ...(MERGED_ATTEMPT_ALIASES[id] || [])].some(
+        (previousId) => previous.get(previousId) && previous.get(previousId).checked
+      );
     return {
       id: session && session.id ? session.id : String(Date.now()),
       startedAt: session && session.startedAt ? session.startedAt : Date.now(),
@@ -945,7 +966,7 @@
         id: item.id,
         label: item.label,
         hint: item.hint,
-        checked: !!(previous.get(item.id) && previous.get(item.id).checked),
+        checked: wasChecked(item.id),
       })),
       memo: session && session.memo ? session.memo : "",
     };
@@ -979,6 +1000,10 @@
         custom: true,
       },
     ];
+  }
+
+  function removeChecklistItem(items, id) {
+    return normalizeChecklistItems(items).filter((item) => item.id !== id || !item.custom);
   }
 
   function reorderChecklistItem(items, draggedId, targetId, placement = "after") {
@@ -1117,6 +1142,8 @@
 
     let state = safeRead() || createAppState();
     let settingsSectionOpen = { default: true, custom: true };
+    let customAddOpen = false;
+    let pendingDeleteCustomId = "";
     let expandedHints = new Set();
 
     state.items = normalizeChecklistItems(state.items);
@@ -1178,7 +1205,7 @@
                   ${expanded ? `<small>${escapeHtml(item.hint)}</small>` : ""}
                 </span>
               </button>
-              <button class="attempt-hint" data-hint="${item.id}" aria-expanded="${expanded}" aria-label="${expanded ? "설명 닫기" : "설명 보기"}">${expanded ? "✕" : "?"}</button>
+              <button class="attempt-hint" data-hint="${item.id}" aria-expanded="${expanded}" aria-label="${expanded ? "설명 닫기" : "설명 보기"}">${expanded ? "−" : "?"}</button>
             </div>
           `;
         })
@@ -1195,14 +1222,29 @@
                 <strong>${escapeHtml(item.label)}</strong>
                 <small>${escapeHtml(item.hint)}</small>
               </div>
-              <label class="switch">
-                <input type="checkbox" data-visible-item="${item.id}" ${item.hidden ? "" : "checked"}>
-                <span>${item.hidden ? "숨김" : "보임"}</span>
-              </label>
+              <div class="setting-row-actions">
+                <label class="switch">
+                  <input type="checkbox" data-visible-item="${item.id}" ${item.hidden ? "" : "checked"}>
+                  <span>${item.hidden ? "숨김" : "보임"}</span>
+                </label>
+                ${item.custom ? `<button class="danger-btn" data-delete-custom-item="${item.id}" value="default">삭제</button>` : ""}
+              </div>
             </div>
           `
         )
         .join("");
+    }
+
+    function renderCustomAddBox() {
+      if (!customAddOpen) return "";
+      return `
+        <div class="add-item-box">
+          <strong>항목 추가</strong>
+          <input id="newItemLabel" placeholder="예: 엄마랑 더 있고 싶니?">
+          <textarea id="newItemHint" rows="3" placeholder="예: 잠깐 떨어진 뒤 울기 시작했는지 보고, 가까이 있어 주면 진정되는지 확인해요."></textarea>
+          <button class="primary add-item-btn" id="addItemBtn" value="default">추가</button>
+        </div>
+      `;
     }
 
     function renderSettingsSection(kind, title, items, emptyText) {
@@ -1211,10 +1253,12 @@
         <details class="settings-section" data-settings-section="${kind}"${settingsSectionOpen[kind] ? " open" : ""}>
           <summary>
             <span>${title}</span>
+            ${kind === "custom" ? `<button class="summary-action" data-add-custom-open value="default">${customAddOpen ? "닫기" : "추가"}</button>` : ""}
             <small>${items.length}개</small>
           </summary>
           <div class="settings-list" data-settings-list="${kind}">
             ${rows || `<p class="settings-empty">${emptyText}</p>`}
+            ${kind === "custom" ? renderCustomAddBox() : ""}
           </div>
         </details>
       `;
@@ -1224,7 +1268,25 @@
       const items = normalizeChecklistItems(state.items);
       const defaultItems = items.filter((item) => !item.custom);
       const customItems = items.filter((item) => item.custom);
-      const backupCode = btoa(
+      return `
+        <dialog id="settingsDialog" class="settings-dialog">
+          <form method="dialog">
+            <div class="dialog-head">
+              <strong>설정</strong>
+              <div class="dialog-head-actions">
+                <button class="secondary compact-btn" data-backup-open value="default">백업/가져오기</button>
+                <button class="icon-btn" value="cancel" aria-label="닫기">×</button>
+              </div>
+            </div>
+            ${renderSettingsSection("default", "기본 항목", defaultItems, "기본 항목이 없어요.")}
+            ${renderSettingsSection("custom", "사용자 항목", customItems, "아직 추가한 사용자 항목이 없어요.")}
+          </form>
+        </dialog>
+      `;
+    }
+
+    function getBackupCode() {
+      return btoa(
         unescape(
           encodeURIComponent(
             JSON.stringify({
@@ -1237,30 +1299,23 @@
           )
         )
       );
+    }
 
+    function renderBackupDialog() {
       return `
-        <dialog id="settingsDialog" class="settings-dialog">
+        <dialog id="backupDialog" class="settings-dialog backup-dialog">
           <form method="dialog">
             <div class="dialog-head">
-              <strong>설정</strong>
+              <strong>백업 / 가져오기</strong>
               <button class="icon-btn" value="cancel" aria-label="닫기">×</button>
             </div>
-            ${renderSettingsSection("default", "기본 항목", defaultItems, "기본 항목이 없어요.")}
-            ${renderSettingsSection("custom", "사용자 항목", customItems, "아직 추가한 사용자 항목이 없어요.")}
-            <div class="add-item-box">
-              <strong>항목 추가</strong>
-              <input id="newItemLabel" placeholder="예: 엄마랑 더 있고 싶니?">
-              <textarea id="newItemHint" rows="3" placeholder="예: 잠깐 떨어진 뒤 울기 시작했는지 보고, 가까이 있어 주면 진정되는지 확인해요."></textarea>
-              <button class="primary add-item-btn" id="addItemBtn" value="default">추가</button>
+            <p class="settings-empty">아래 코드를 복사해 두면 다른 기기로 이력을 옮길 수 있어요. 가져올 코드를 붙여넣고 [가져오기]를 눌러요.</p>
+            <textarea id="backupText" rows="5">${escapeHtml(getBackupCode())}</textarea>
+            <div class="backup-actions">
+              <button class="secondary" data-copy-backup value="default">클립보드에 복사</button>
+              <button class="secondary" data-paste-backup value="default">클립보드에서 붙여넣기</button>
+              <button class="primary" id="importBtn" value="default">가져오기</button>
             </div>
-            <details class="settings-section">
-              <summary><span>백업 / 가져오기</span></summary>
-              <div class="settings-list">
-                <p class="settings-empty">아래 코드를 복사해 두면 다른 기기로 이력을 옆길 수 있어요. 가져올 코드를 붙여넣고 [가져오기]를 눌러요.</p>
-                <textarea id="backupText" rows="4">${escapeHtml(backupCode)}</textarea>
-                <button class="secondary add-item-btn" id="importBtn" value="default">가져오기</button>
-              </div>
-            </details>
           </form>
         </dialog>
       `;
@@ -1297,6 +1352,25 @@
             <div class="complete-actions">
               <button class="secondary" data-complete-skip value="default">메모 없이 끝내기</button>
               <button class="primary" data-complete-save value="default">저장하고 끝내기</button>
+            </div>
+          </form>
+        </dialog>
+      `;
+    }
+
+    function renderDeleteCustomDialog() {
+      const item = normalizeChecklistItems(state.items).find((entry) => entry.id === pendingDeleteCustomId);
+      return `
+        <dialog id="deleteCustomDialog" class="settings-dialog">
+          <form method="dialog">
+            <div class="dialog-head">
+              <strong>정말 삭제할까요?</strong>
+              <button class="icon-btn" value="cancel" aria-label="닫기">×</button>
+            </div>
+            <p class="complete-copy">${escapeHtml(item ? item.label : "이 사용자 항목")} 항목을 삭제합니다.</p>
+            <div class="complete-actions">
+              <button class="secondary" value="cancel">취소</button>
+              <button class="danger-btn confirm-danger" data-delete-custom-confirm value="default">삭제하기</button>
             </div>
           </form>
         </dialog>
@@ -1368,6 +1442,8 @@
 
             ${renderSettingsDialog()}
             ${renderHistoryDialog()}
+            ${renderBackupDialog()}
+            ${renderDeleteCustomDialog()}
           </div>
         `;
         return;
@@ -1392,7 +1468,7 @@
 
           <section class="care-note">
             <strong>바로 도움을 받아야 할 때</strong>
-            <p>숨쉬기 힘들어 보이거나, 입술이 파랗거나, 고열/축 처짐/평소와 다른 울음이 있으면 체크리스트보다 의료진 연락이 먼저입니다.</p>
+            <p>숨쉬기 힘들어 보이거나, 입술이 파랗거나, 고열/축 처짐/평소와 다른 울음이 <span class="no-break">있으면 체크리스트보다</span> 의료진 연락이 먼저입니다.</p>
           </section>
 
           <main class="attempt-list">
@@ -1408,17 +1484,19 @@
 
         ${renderSettingsDialog()}
         ${renderHistoryDialog()}
+        ${renderBackupDialog()}
+        ${renderDeleteCustomDialog()}
         ${renderCompleteDialog()}
       `;
     }
 
     function closeDialogFromBackdrop(event) {
-      if (!["settingsDialog", "historyDialog", "completeDialog"].includes(event.target.id)) return false;
+      if (!["settingsDialog", "historyDialog", "backupDialog", "deleteCustomDialog", "completeDialog"].includes(event.target.id)) return false;
       event.target.close();
       return true;
     }
 
-    root.addEventListener("click", (event) => {
+    root.addEventListener("click", async (event) => {
       if (closeDialogFromBackdrop(event)) return;
 
       const toggle = event.target.closest("[data-toggle]");
@@ -1459,6 +1537,15 @@
         return;
       }
 
+      if (event.target.closest("[data-backup-open]")) {
+        event.preventDefault();
+        const dialog = root.querySelector("#backupDialog");
+        const text = root.querySelector("#backupText");
+        if (text) text.value = getBackupCode();
+        dialog.showModal();
+        return;
+      }
+
       if (event.target.closest("[data-history]")) {
         root.querySelector("#historyDialog").showModal();
         return;
@@ -1487,11 +1574,70 @@
           label: labelInput.value,
           hint: hintInput.value,
         });
+        customAddOpen = false;
         commit({
           ...state,
           items: nextItems,
           session: normalizeSession(state.session, nextItems),
         }, { reopenSettings: true });
+        return;
+      }
+
+      const deleteCustom = event.target.closest("[data-delete-custom-item]");
+      if (deleteCustom) {
+        event.preventDefault();
+        pendingDeleteCustomId = deleteCustom.dataset.deleteCustomItem;
+        root.querySelector("#deleteCustomDialog").showModal();
+        return;
+      }
+
+      if (event.target.closest("[data-delete-custom-confirm]")) {
+        event.preventDefault();
+        const nextItems = removeChecklistItem(state.items, pendingDeleteCustomId);
+        pendingDeleteCustomId = "";
+        root.querySelector("#deleteCustomDialog")?.close();
+        commit({
+          ...state,
+          items: nextItems,
+          session: normalizeSession(state.session, nextItems),
+        }, { reopenSettings: true });
+        return;
+      }
+
+      if (event.target.closest("[data-add-custom-open]")) {
+        event.preventDefault();
+        settingsSectionOpen = { ...settingsSectionOpen, custom: true };
+        customAddOpen = !customAddOpen;
+        render();
+        setTimeout(() => {
+          const dialog = root.querySelector("#settingsDialog");
+          dialog?.showModal();
+          if (customAddOpen) root.querySelector("#newItemLabel")?.focus();
+        }, 0);
+        return;
+      }
+
+      if (event.target.closest("[data-copy-backup]")) {
+        event.preventDefault();
+        const text = root.querySelector("#backupText");
+        try {
+          await navigator.clipboard.writeText(text.value);
+        } catch (error) {
+          text.focus();
+          text.select();
+          alert("복사 권한이 막혀 있어요. 선택된 코드를 직접 복사해 주세요.");
+        }
+        return;
+      }
+
+      if (event.target.closest("[data-paste-backup]")) {
+        event.preventDefault();
+        const text = root.querySelector("#backupText");
+        try {
+          text.value = await navigator.clipboard.readText();
+        } catch (error) {
+          alert("클립보드 읽기 권한이 막혀 있어요. 코드를 직접 붙여넣어 주세요.");
+        }
         return;
       }
 
@@ -1735,7 +1881,7 @@
         if (!Array.isArray(imported.history) || !imported.session) {
           throw new Error("Invalid backup");
         }
-        root.querySelector("#settingsDialog").close();
+        root.querySelector("#backupDialog").close();
         commit({
           ...state,
           session: imported.session,
@@ -1763,6 +1909,7 @@
     normalizeChecklistItems,
     normalizeSession,
     reorderChecklistItem,
+    removeChecklistItem,
     setChecklistItemHidden,
     startSession,
     toggleThemeValue,
