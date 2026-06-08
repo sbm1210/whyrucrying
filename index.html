@@ -471,6 +471,8 @@
       }
 
       .setting-row {
+        --drag-shift-x: 0px;
+        --drag-shift-y: 0px;
         display: grid;
         grid-template-columns: auto 1fr auto;
         gap: 10px;
@@ -480,10 +482,27 @@
         border-radius: 8px;
         background: var(--surface);
         cursor: grab;
+        transform: translate(var(--drag-shift-x), var(--drag-shift-y));
+        transition:
+          transform 170ms cubic-bezier(0.22, 1, 0.36, 1),
+          box-shadow 170ms ease,
+          border-color 170ms ease,
+          background 170ms ease,
+          opacity 170ms ease;
+        will-change: transform;
       }
 
       .setting-row.dragging {
-        opacity: 0.55;
+        border-color: rgba(221, 137, 112, 0.48);
+        background: var(--panel);
+        box-shadow: 0 12px 24px rgba(53, 63, 59, 0.18);
+        opacity: 0.92;
+        pointer-events: none;
+        transform: translate(var(--drag-shift-x), var(--drag-shift-y)) scale(1.015);
+      }
+
+      .setting-row.is-shifting {
+        pointer-events: none;
       }
 
       .drag-handle {
@@ -787,14 +806,14 @@
     ];
   }
 
-  function reorderChecklistItem(items, draggedId, targetId) {
+  function reorderChecklistItem(items, draggedId, targetId, placement = "after") {
     const next = normalizeChecklistItems(items);
     const from = next.findIndex((item) => item.id === draggedId);
     const to = next.findIndex((item) => item.id === targetId);
     if (from < 0 || to < 0 || from === to) return next;
     const [dragged] = next.splice(from, 1);
     const targetIndex = next.findIndex((item) => item.id === targetId);
-    next.splice(targetIndex + 1, 0, dragged);
+    next.splice(placement === "before" ? targetIndex : targetIndex + 1, 0, dragged);
     return next;
   }
 
@@ -1278,10 +1297,106 @@
 
     let pointerDragId = "";
     let pointerDragPoint = null;
+    let pointerDragHandle = null;
+    let pointerDragPointerId = null;
+    let settingsOrderDirty = false;
+
+    const getSettingsRows = () => Array.from(root.querySelectorAll(".settings-list [data-drag-item]"));
+
+    const getSettingsRowPositions = () =>
+      new Map(
+        getSettingsRows().map((row) => [row.dataset.dragItem, row.getBoundingClientRect()])
+      );
+
+    const sameItemOrder = (left, right) =>
+      left.length === right.length && left.every((item, index) => item.id === right[index].id);
+
+    const animateSettingsRows = (previousPositions) => {
+      getSettingsRows().forEach((row) => {
+        const previous = previousPositions.get(row.dataset.dragItem);
+        if (!previous) return;
+        const current = row.getBoundingClientRect();
+        const dx = previous.left - current.left;
+        const dy = previous.top - current.top;
+        if (!dx && !dy) return;
+
+        row.classList.add("is-shifting");
+        row.style.transition = "none";
+        row.style.setProperty("--drag-shift-x", `${dx}px`);
+        row.style.setProperty("--drag-shift-y", `${dy}px`);
+        row.getBoundingClientRect();
+        row.style.transition = "";
+
+        requestAnimationFrame(() => {
+          row.style.setProperty("--drag-shift-x", "0px");
+          row.style.setProperty("--drag-shift-y", "0px");
+        });
+
+        const cleanup = () => {
+          row.classList.remove("is-shifting");
+          row.style.removeProperty("--drag-shift-x");
+          row.style.removeProperty("--drag-shift-y");
+          row.removeEventListener("transitionend", cleanup);
+        };
+        row.addEventListener("transitionend", cleanup);
+        setTimeout(cleanup, 260);
+      });
+    };
+
+    function animateSettingsReorder(draggedId, targetId, placement) {
+      if (!draggedId || !targetId || draggedId === targetId) return false;
+      const nextItems = reorderChecklistItem(state.items, draggedId, targetId, placement);
+      if (sameItemOrder(normalizeChecklistItems(state.items), nextItems)) return false;
+
+      const list = root.querySelector(".settings-list");
+      const rows = getSettingsRows();
+      const draggedRow = rows.find((row) => row.dataset.dragItem === draggedId);
+      const targetRow = rows.find((row) => row.dataset.dragItem === targetId);
+      if (!list || !draggedRow || !targetRow) return false;
+
+      const previousPositions = getSettingsRowPositions();
+      list.insertBefore(
+        draggedRow,
+        placement === "before" ? targetRow : targetRow.nextSibling
+      );
+      draggedRow.classList.add("dragging");
+      animateSettingsRows(previousPositions);
+
+      state = {
+        ...state,
+        items: nextItems,
+        session: normalizeSession(state.session, nextItems),
+      };
+      state.storageOk = safeWrite(getPersistedState());
+      settingsOrderDirty = true;
+      return true;
+    }
+
+    function movePointerDragTo(point) {
+      const target = document.elementFromPoint(point.x, point.y);
+      const row = target ? target.closest("[data-drag-item]") : null;
+      if (!row || row.dataset.dragItem === pointerDragId) return false;
+      const rect = row.getBoundingClientRect();
+      const placement = point.y < rect.top + rect.height / 2 ? "before" : "after";
+      return animateSettingsReorder(pointerDragId, row.dataset.dragItem, placement);
+    }
 
     const clearPointerDrag = () => {
+      if (
+        pointerDragHandle &&
+        pointerDragHandle.releasePointerCapture &&
+        pointerDragPointerId !== null
+      ) {
+        try {
+          pointerDragHandle.releasePointerCapture(pointerDragPointerId);
+        } catch (error) {
+          // The pointer can already be released by the browser after a cancel.
+        }
+      }
       pointerDragId = "";
       pointerDragPoint = null;
+      pointerDragHandle = null;
+      pointerDragPointerId = null;
       root.querySelectorAll(".setting-row.dragging").forEach((row) => {
         row.classList.remove("dragging");
       });
@@ -1293,6 +1408,15 @@
       const row = handle.closest("[data-drag-item]");
       pointerDragId = row ? row.dataset.dragItem : "";
       pointerDragPoint = { x: event.clientX, y: event.clientY };
+      pointerDragHandle = handle;
+      pointerDragPointerId = event.pointerId;
+      if (handle.setPointerCapture) {
+        try {
+          handle.setPointerCapture(event.pointerId);
+        } catch (error) {
+          // Some browsers do not allow capture if the pointer is no longer active.
+        }
+      }
       if (row) row.classList.add("dragging");
       event.preventDefault();
     });
@@ -1300,23 +1424,22 @@
     root.addEventListener("pointermove", (event) => {
       if (!pointerDragId) return;
       pointerDragPoint = { x: event.clientX, y: event.clientY };
+      movePointerDragTo(pointerDragPoint);
       event.preventDefault();
     });
 
     root.addEventListener("pointerup", (event) => {
       if (!pointerDragId) return;
       const point = pointerDragPoint || { x: event.clientX, y: event.clientY };
-      const target = document.elementFromPoint(point.x, point.y);
-      const row = target ? target.closest("[data-drag-item]") : null;
-      const draggedId = pointerDragId;
+      movePointerDragTo(point);
+      const shouldRefreshSettings = settingsOrderDirty;
+      settingsOrderDirty = false;
       clearPointerDrag();
-      if (!row || row.dataset.dragItem === draggedId) return;
-      const nextItems = reorderChecklistItem(state.items, draggedId, row.dataset.dragItem);
-      commit({
-        ...state,
-        items: nextItems,
-        session: normalizeSession(state.session, nextItems),
-      }, { reopenSettings: true });
+      if (shouldRefreshSettings) {
+        setTimeout(() => {
+          if (!pointerDragId) commit(state, { reopenSettings: true });
+        }, 220);
+      }
     });
 
     root.addEventListener("pointercancel", clearPointerDrag);
@@ -1340,7 +1463,9 @@
       event.preventDefault();
       const draggedId = event.dataTransfer.getData("text/plain");
       const targetId = row.dataset.dragItem;
-      const nextItems = reorderChecklistItem(state.items, draggedId, targetId);
+      const rect = row.getBoundingClientRect();
+      const placement = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
+      const nextItems = reorderChecklistItem(state.items, draggedId, targetId, placement);
       commit({
         ...state,
         items: nextItems,
@@ -1352,6 +1477,12 @@
       const row = event.target.closest("[data-drag-item]");
       if (row) row.classList.remove("dragging");
     });
+
+    root.addEventListener("close", (event) => {
+      if (event.target.id === "settingsDialog") {
+        render();
+      }
+    }, true);
 
     root.addEventListener("click", (event) => {
       if (event.target.id !== "importBtn") return;
