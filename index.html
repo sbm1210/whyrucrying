@@ -106,9 +106,10 @@
       }
 
       h1 {
-        font-size: clamp(30px, 10vw, 48px);
+        font-size: clamp(28px, 8vw, 48px);
         line-height: 0.98;
         letter-spacing: 0;
+        white-space: nowrap;
       }
 
       .started {
@@ -180,6 +181,16 @@
         background: rgba(255, 246, 242, 0.84);
         padding: 12px;
         color: #81514b;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .self-care-note {
+        border: 1px solid rgba(121, 184, 167, 0.28);
+        border-radius: 8px;
+        background: rgba(240, 249, 246, 0.86);
+        padding: 12px;
+        color: #3f6760;
         font-size: 13px;
         line-height: 1.5;
       }
@@ -442,7 +453,12 @@
         margin: 0 0 14px;
       }
 
-      .care-note strong {
+      .self-care-note {
+        margin: 14px 0 0;
+      }
+
+      .care-note strong,
+      .self-care-note strong {
         display: block;
         margin-bottom: 4px;
       }
@@ -845,9 +861,14 @@
       hint: "최근에 먹었다면 세워 안고 등을 토닥여 보고, 배가 빵빵하면 다리를 천천히 움직이거나 배를 부드럽게 마사지해요.",
     },
     {
+      id: "poop",
+      label: "응가가 불편하니?",
+      hint: "며칠간 변을 못 봤거나, 힘을 주며 보채거나, 배가 빵빵한지 봐요. 배를 부드럽게 문지르거나 다리를 천천히 움직여 봐요.",
+    },
+    {
       id: "hot",
       label: "춥거나 덥니?",
-      hint: "목덜미와 등 안쪽을 만져봐요. 땀이 났다면 시원하게 하고, 몸통이 서늘하다면 덮어줘요.",
+      hint: "손발보다 목덜미와 등 안쪽을 만져봐요. 땀이 났다면 시원하게 하고, 몸통이 서늘하다면 덮어줘요.",
     },
     {
       id: "hold",
@@ -870,11 +891,18 @@
       hint: "침을 많이 흘리거나 손을 입에 넣으면 깨끗한 손가락으로 잇몸을 문질러 주고, 차갑게 식힌 치발기나 젖은 수건을 물려봐요.",
     },
     {
+      id: "nose",
+      label: "코가 답답하니?",
+      hint: "코가 막혀서 먹거나 잠들기 힘들어 보이는지 봐요. 숨소리가 답답하거나 수유 중 자주 떼면 코막힘도 확인해요.",
+    },
+    {
       id: "skin",
-      label: "피부에 자극이 있니?",
+      label: "피부가 불편하니?",
       hint: "발진, 땀띠, 벌레 물림, 쓸린 자국이 보이면 옷을 느슨하게 하고 자극을 줄여요.",
     },
   ];
+
+  const DEFAULT_HIDDEN_ATTEMPT_IDS = new Set(["poop", "nose"]);
 
   const ATTEMPT_GROUPS = [
     { id: "body", title: "몸이 불편한가" },
@@ -885,10 +913,10 @@
   ];
 
   const ATTEMPT_GROUP = {
-    diaper: "body", hungry: "body", gas: "body", sleepy: "body",
+    diaper: "body", hungry: "body", gas: "body", poop: "body", sleepy: "body",
     hot: "env", clothes: "env", position: "env",
     hold: "feel",
-    gums: "pain", skin: "pain",
+    gums: "pain", nose: "pain", skin: "pain",
   };
 
   const MERGED_ATTEMPT_ALIASES = {
@@ -900,7 +928,11 @@
 
   function normalizeChecklistItems(items) {
     if (!Array.isArray(items)) {
-      return ATTEMPTS.map((item) => ({ ...item, hidden: false, custom: false }));
+      return ATTEMPTS.map((item) => ({
+        ...item,
+        hidden: DEFAULT_HIDDEN_ATTEMPT_IDS.has(item.id),
+        custom: false,
+      }));
     }
 
     const defaults = new Map(ATTEMPTS.map((item) => [item.id, item]));
@@ -911,7 +943,13 @@
       if (!item || !item.id || seen.has(item.id)) return;
       const base = defaults.get(item.id);
       if (base) {
-        ordered.push({ ...base, hidden: !!item.hidden, custom: false });
+        ordered.push({
+          ...base,
+          hidden: item.hidden === undefined
+            ? DEFAULT_HIDDEN_ATTEMPT_IDS.has(item.id)
+            : !!item.hidden,
+          custom: false,
+        });
         seen.add(item.id);
         return;
       }
@@ -928,7 +966,13 @@
     });
 
     ATTEMPTS.forEach((item) => {
-      if (!seen.has(item.id)) ordered.push({ ...item, hidden: false, custom: false });
+      if (!seen.has(item.id)) {
+        ordered.push({
+          ...item,
+          hidden: DEFAULT_HIDDEN_ATTEMPT_IDS.has(item.id),
+          custom: false,
+        });
+      }
     });
 
     return ordered;
@@ -1467,13 +1511,18 @@
           }
 
           <section class="care-note">
-            <strong>바로 도움을 받아야 할 때</strong>
-            <p>숨쉬기 힘들어 보이거나, 입술이 파랗거나, 고열/축 처짐/평소와 다른 울음이 <span class="no-break">있으면 체크리스트보다</span> 의료진 연락이 먼저입니다.</p>
+            <strong>먼저 확인해 주세요</strong>
+            <p>숨쉬기 힘듦, 파랗거나 회색빛 얼굴, 축 처짐, 경련, 반복 구토, 사라지지 않는 발진, 8시간 이상 소변 없음, 수유 거부, 평소와 전혀 다른 울음이 있으면 의료진 연락이 먼저예요. 3개월 미만은 38.0°C 이상이면 바로 상담하세요.</p>
           </section>
 
           <main class="attempt-list">
             ${renderAttempts()}
           </main>
+
+          <section class="self-care-note">
+            <strong>나도 너무 힘들 때</strong>
+            <p>아기를 안전한 침대에 눕히고 5–10분 숨을 고르세요. 혼자 버티기 어렵다면 다른 보호자나 가까운 사람에게 바로 연락하세요.</p>
+          </section>
 
           <div class="complete-bar">
             <button class="primary" data-complete>${UI_COPY.complete}</button>
