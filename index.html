@@ -1277,19 +1277,39 @@
     });
 
     let pointerDragId = "";
+    let pointerDragPoint = null;
+
+    const clearPointerDrag = () => {
+      pointerDragId = "";
+      pointerDragPoint = null;
+      root.querySelectorAll(".setting-row.dragging").forEach((row) => {
+        row.classList.remove("dragging");
+      });
+    };
 
     root.addEventListener("pointerdown", (event) => {
       const handle = event.target.closest("[data-drag-handle]");
       if (!handle) return;
       const row = handle.closest("[data-drag-item]");
       pointerDragId = row ? row.dataset.dragItem : "";
+      pointerDragPoint = { x: event.clientX, y: event.clientY };
+      if (row) row.classList.add("dragging");
+      event.preventDefault();
+    });
+
+    root.addEventListener("pointermove", (event) => {
+      if (!pointerDragId) return;
+      pointerDragPoint = { x: event.clientX, y: event.clientY };
+      event.preventDefault();
     });
 
     root.addEventListener("pointerup", (event) => {
       if (!pointerDragId) return;
-      const row = event.target.closest("[data-drag-item]");
+      const point = pointerDragPoint || { x: event.clientX, y: event.clientY };
+      const target = document.elementFromPoint(point.x, point.y);
+      const row = target ? target.closest("[data-drag-item]") : null;
       const draggedId = pointerDragId;
-      pointerDragId = "";
+      clearPointerDrag();
       if (!row || row.dataset.dragItem === draggedId) return;
       const nextItems = reorderChecklistItem(state.items, draggedId, row.dataset.dragItem);
       commit({
@@ -1298,6 +1318,8 @@
         session: normalizeSession(state.session, nextItems),
       }, { reopenSettings: true });
     });
+
+    root.addEventListener("pointercancel", clearPointerDrag);
 
     root.addEventListener("dragstart", (event) => {
       const row = event.target.closest("[data-drag-item]");
