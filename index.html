@@ -59,6 +59,7 @@
       }
 
       button,
+      input,
       textarea {
         font: inherit;
       }
@@ -81,6 +82,13 @@
         justify-content: space-between;
         gap: 16px;
         padding: 10px 0 18px;
+      }
+
+      .head-actions {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 8px;
       }
 
       .eyebrow {
@@ -310,6 +318,20 @@
         border-color: rgba(240, 191, 84, 0.62);
       }
 
+      input {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+        color: var(--text);
+        padding: 12px;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: rgba(232, 136, 115, 0.62);
+      }
+
       .primary-actions {
         display: grid;
         grid-template-columns: 0.75fr 1.25fr;
@@ -421,6 +443,104 @@
 
       .backup-dialog form {
         padding: 16px;
+      }
+
+      .settings-dialog {
+        width: min(calc(100% - 28px), 520px);
+        max-height: min(82svh, 760px);
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--text);
+        padding: 0;
+      }
+
+      .settings-dialog::backdrop {
+        background: rgba(39, 52, 58, 0.28);
+      }
+
+      .settings-dialog form {
+        padding: 16px;
+      }
+
+      .settings-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .setting-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        cursor: grab;
+      }
+
+      .setting-row.dragging {
+        opacity: 0.55;
+      }
+
+      .drag-handle {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 34px;
+        border-radius: 8px;
+        color: var(--muted);
+        background: var(--soft);
+        font-weight: 900;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+      }
+
+      .setting-row div {
+        display: grid;
+        gap: 4px;
+      }
+
+      .setting-row strong {
+        font-size: 14px;
+      }
+
+      .setting-row small {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .switch {
+        display: grid;
+        justify-items: center;
+        gap: 5px;
+        min-width: 46px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .switch input {
+        width: 22px;
+        height: 22px;
+        accent-color: var(--accent-2);
+      }
+
+      .add-item-box {
+        display: grid;
+        gap: 9px;
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+      }
+
+      .add-item-btn {
+        width: 100%;
       }
 
       .dialog-head,
@@ -567,11 +687,47 @@
     },
   ];
 
-  function createSession(now = Date.now()) {
+  function normalizeChecklistItems(items) {
+    if (!Array.isArray(items)) {
+      return ATTEMPTS.map((item) => ({ ...item, hidden: false, custom: false }));
+    }
+
+    const defaults = new Map(ATTEMPTS.map((item) => [item.id, item]));
+    const seen = new Set();
+    const ordered = [];
+
+    items.forEach((item) => {
+      if (!item || !item.id || seen.has(item.id)) return;
+      const base = defaults.get(item.id);
+      if (base) {
+        ordered.push({ ...base, hidden: !!item.hidden, custom: false });
+        seen.add(item.id);
+        return;
+      }
+      if (item.custom && item.label && item.hint) {
+        ordered.push({
+          id: item.id,
+          label: item.label,
+          hint: item.hint,
+          hidden: !!item.hidden,
+          custom: true,
+        });
+        seen.add(item.id);
+      }
+    });
+
+    ATTEMPTS.forEach((item) => {
+      if (!seen.has(item.id)) ordered.push({ ...item, hidden: false, custom: false });
+    });
+
+    return ordered;
+  }
+
+  function createSession(now = Date.now(), items = ATTEMPTS) {
     return {
       id: String(now),
       startedAt: now,
-      attempts: ATTEMPTS.map((item) => ({
+      attempts: normalizeChecklistItems(items).map((item) => ({
         id: item.id,
         label: item.label,
         hint: item.hint,
@@ -581,20 +737,65 @@
     };
   }
 
-  function normalizeSession(session) {
-    const templateIds = ATTEMPTS.map((item) => item.id).join("|");
-    const sessionIds = Array.isArray(session && session.attempts)
-      ? session.attempts.map((item) => item.id).join("|")
-      : "";
-
-    if (sessionIds === templateIds) {
-      return session;
-    }
-
+  function normalizeSession(session, items = ATTEMPTS) {
+    const normalizedItems = normalizeChecklistItems(items);
+    const previous = new Map(
+      Array.isArray(session && session.attempts)
+        ? session.attempts.map((item) => [item.id, item])
+        : []
+    );
     return {
-      ...createSession(session && session.startedAt ? session.startedAt : Date.now()),
+      id: session && session.id ? session.id : String(Date.now()),
+      startedAt: session && session.startedAt ? session.startedAt : Date.now(),
+      attempts: normalizedItems.map((item) => ({
+        id: item.id,
+        label: item.label,
+        hint: item.hint,
+        checked: !!(previous.get(item.id) && previous.get(item.id).checked),
+      })),
       memo: session && session.memo ? session.memo : "",
     };
+  }
+
+  function getVisibleAttempts(session, items = ATTEMPTS) {
+    const itemMap = new Map(normalizeChecklistItems(items).map((item) => [item.id, item]));
+    return session.attempts.filter((attempt) => {
+      const item = itemMap.get(attempt.id);
+      return item && !item.hidden;
+    });
+  }
+
+  function setChecklistItemHidden(items, id, hidden) {
+    return normalizeChecklistItems(items).map((item) =>
+      item.id === id ? { ...item, hidden: !!hidden } : item
+    );
+  }
+
+  function addChecklistItem(items, item) {
+    const label = (item && item.label ? item.label : "").trim();
+    const hint = (item && item.hint ? item.hint : "").trim();
+    if (!label || !hint) return normalizeChecklistItems(items);
+    return [
+      ...normalizeChecklistItems(items),
+      {
+        id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        label,
+        hint,
+        hidden: false,
+        custom: true,
+      },
+    ];
+  }
+
+  function reorderChecklistItem(items, draggedId, targetId) {
+    const next = normalizeChecklistItems(items);
+    const from = next.findIndex((item) => item.id === draggedId);
+    const to = next.findIndex((item) => item.id === targetId);
+    if (from < 0 || to < 0 || from === to) return next;
+    const [dragged] = next.splice(from, 1);
+    const targetIndex = next.findIndex((item) => item.id === targetId);
+    next.splice(targetIndex + 1, 0, dragged);
+    return next;
   }
 
   function toggleAttempt(session, id) {
@@ -610,9 +811,10 @@
     return { ...session, memo };
   }
 
-  function getProgress(session) {
-    const total = session.attempts.length;
-    const done = session.attempts.filter((item) => item.checked).length;
+  function getProgress(session, items = ATTEMPTS) {
+    const visible = getVisibleAttempts(session, items);
+    const total = visible.length;
+    const done = visible.filter((item) => item.checked).length;
     return {
       done,
       total,
@@ -629,15 +831,17 @@
       endedAt,
       durationMinutes: Math.max(0, Math.round((endedAt - startedAt) / 60000)),
       memo: options.memo !== undefined ? options.memo : session.memo || "",
-      checkedAttempts: session.attempts
+      checkedAttempts: getVisibleAttempts(session, options.items || ATTEMPTS)
         .filter((item) => item.checked)
         .map((item) => item.label),
     };
   }
 
   function createAppState(now = Date.now()) {
+    const items = normalizeChecklistItems();
     return {
-      session: createSession(now),
+      items,
+      session: createSession(now, items),
       history: [],
       storageOk: true,
       active: false,
@@ -649,16 +853,16 @@
     return {
       ...state,
       active: true,
-      session: createSession(now),
+      session: createSession(now, state.items),
     };
   }
 
   function completeActiveSession(state, options = {}) {
-    const entry = completeSession(state.session, options);
+    const entry = completeSession(state.session, { ...options, items: state.items });
     return {
       ...state,
       active: false,
-      session: createSession(options.nextStartedAt || Date.now()),
+      session: createSession(options.nextStartedAt || Date.now(), state.items),
       history: [entry, ...(state.history || [])].slice(0, 100),
     };
   }
@@ -719,7 +923,8 @@
 
     let state = safeRead() || createAppState();
 
-    state.session = normalizeSession(state.session);
+    state.items = normalizeChecklistItems(state.items);
+    state.session = normalizeSession(state.session, state.items);
     if (typeof state.active !== "boolean") state.active = false;
     if (state.theme !== "dark") state.theme = "light";
 
@@ -729,6 +934,7 @@
         history: state.history,
         active: state.active,
         theme: state.theme,
+        items: state.items,
       };
     }
 
@@ -738,10 +944,13 @@
       if (meta) meta.setAttribute("content", state.theme === "dark" ? "#202a2f" : "#f6f8f5");
     }
 
-    function commit(next) {
+    function commit(next, options = {}) {
       state = next;
       state.storageOk = safeWrite(getPersistedState());
       render();
+      if (options.reopenSettings) {
+        setTimeout(() => root.querySelector("#settingsDialog")?.showModal(), 0);
+      }
     }
 
     function renderThemeButton(className = "theme-toggle") {
@@ -749,8 +958,17 @@
       return `<button class="${className}" data-theme-toggle>${label}</button>`;
     }
 
+    function renderHeadActions() {
+      return `
+        <div class="head-actions">
+          ${renderThemeButton()}
+          <button class="theme-toggle" data-settings>설정</button>
+        </div>
+      `;
+    }
+
     function renderAttempts() {
-      return state.session.attempts
+      return getVisibleAttempts(state.session, state.items)
         .map(
           (item) => `
             <button class="attempt ${item.checked ? "is-checked" : ""}" data-toggle="${item.id}">
@@ -763,6 +981,44 @@
           `
         )
         .join("");
+    }
+
+    function renderSettingsDialog() {
+      const rows = normalizeChecklistItems(state.items)
+        .map(
+          (item) => `
+            <div class="setting-row" draggable="true" data-drag-item="${item.id}">
+              <span class="drag-handle" data-drag-handle aria-hidden="true">↕</span>
+              <div>
+                <strong>${escapeHtml(item.label)}</strong>
+                <small>${escapeHtml(item.hint)}</small>
+              </div>
+              <label class="switch">
+                <input type="checkbox" data-visible-item="${item.id}" ${item.hidden ? "" : "checked"}>
+                <span>${item.hidden ? "숨김" : "보임"}</span>
+              </label>
+            </div>
+          `
+        )
+        .join("");
+
+      return `
+        <dialog id="settingsDialog" class="settings-dialog">
+          <form method="dialog">
+            <div class="dialog-head">
+              <strong>체크리스트 설정</strong>
+              <button class="icon-btn" value="cancel" aria-label="닫기">×</button>
+            </div>
+            <div class="settings-list">${rows}</div>
+            <div class="add-item-box">
+              <strong>항목 추가</strong>
+              <input id="newItemLabel" placeholder="예: 엄마랑 더 있고 싶니?">
+              <textarea id="newItemHint" rows="3" placeholder="예: 잠깐 떨어진 뒤 울기 시작했는지 보고, 가까이 있어 주면 진정되는지 확인해요."></textarea>
+              <button class="primary add-item-btn" id="addItemBtn" value="default">추가</button>
+            </div>
+          </form>
+        </dialog>
+      `;
     }
 
     function renderHistory() {
@@ -803,7 +1059,7 @@
 
     function render() {
       applyTheme();
-      const progress = getProgress(state.session);
+      const progress = getProgress(state.session, state.items);
       const started = formatClock(state.session.startedAt);
 
       if (!state.active) {
@@ -814,7 +1070,7 @@
                 <p class="eyebrow">${UI_COPY.eyebrow}</p>
                 <h1>${UI_COPY.title}</h1>
               </div>
-              ${renderThemeButton()}
+              ${renderHeadActions()}
             </header>
 
             ${
@@ -836,6 +1092,7 @@
               </div>
               ${renderHistory()}
             </section>
+            ${renderSettingsDialog()}
           </div>
         `;
         return;
@@ -849,7 +1106,7 @@
               <h1>${UI_COPY.title}</h1>
               <span class="started">시작 ${started}</span>
             </div>
-            ${renderThemeButton()}
+            ${renderHeadActions()}
           </header>
 
           ${
@@ -910,6 +1167,7 @@
             </div>
           </form>
         </dialog>
+        ${renderSettingsDialog()}
       `;
 
       const memo = root.querySelector("#memo");
@@ -932,7 +1190,7 @@
       }
 
       if (event.target.closest("[data-reset]")) {
-        commit({ ...state, session: createSession() });
+        commit({ ...state, session: createSession(Date.now(), state.items) });
         return;
       }
 
@@ -943,6 +1201,42 @@
 
       if (event.target.closest("[data-theme-toggle]")) {
         commit({ ...state, theme: toggleThemeValue(state.theme) });
+        return;
+      }
+
+      if (event.target.closest("[data-settings]")) {
+        root.querySelector("#settingsDialog").showModal();
+        return;
+      }
+
+      const visibleToggle = event.target.closest("[data-visible-item]");
+      if (visibleToggle) {
+        const nextItems = setChecklistItemHidden(
+          state.items,
+          visibleToggle.dataset.visibleItem,
+          !visibleToggle.checked
+        );
+        commit({
+          ...state,
+          items: nextItems,
+          session: normalizeSession(state.session, nextItems),
+        }, { reopenSettings: true });
+        return;
+      }
+
+      if (event.target.id === "addItemBtn") {
+        event.preventDefault();
+        const labelInput = root.querySelector("#newItemLabel");
+        const hintInput = root.querySelector("#newItemHint");
+        const nextItems = addChecklistItem(state.items, {
+          label: labelInput.value,
+          hint: hintInput.value,
+        });
+        commit({
+          ...state,
+          items: nextItems,
+          session: normalizeSession(state.session, nextItems),
+        }, { reopenSettings: true });
         return;
       }
 
@@ -971,6 +1265,7 @@
                 history: state.history,
                 active: state.active,
                 theme: state.theme,
+                items: state.items,
               })
             )
           )
@@ -979,6 +1274,61 @@
         text.focus();
         text.select();
       }
+    });
+
+    let pointerDragId = "";
+
+    root.addEventListener("pointerdown", (event) => {
+      const handle = event.target.closest("[data-drag-handle]");
+      if (!handle) return;
+      const row = handle.closest("[data-drag-item]");
+      pointerDragId = row ? row.dataset.dragItem : "";
+    });
+
+    root.addEventListener("pointerup", (event) => {
+      if (!pointerDragId) return;
+      const row = event.target.closest("[data-drag-item]");
+      const draggedId = pointerDragId;
+      pointerDragId = "";
+      if (!row || row.dataset.dragItem === draggedId) return;
+      const nextItems = reorderChecklistItem(state.items, draggedId, row.dataset.dragItem);
+      commit({
+        ...state,
+        items: nextItems,
+        session: normalizeSession(state.session, nextItems),
+      }, { reopenSettings: true });
+    });
+
+    root.addEventListener("dragstart", (event) => {
+      const row = event.target.closest("[data-drag-item]");
+      if (!row) return;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", row.dataset.dragItem);
+      row.classList.add("dragging");
+    });
+
+    root.addEventListener("dragover", (event) => {
+      if (!event.target.closest("[data-drag-item]")) return;
+      event.preventDefault();
+    });
+
+    root.addEventListener("drop", (event) => {
+      const row = event.target.closest("[data-drag-item]");
+      if (!row) return;
+      event.preventDefault();
+      const draggedId = event.dataTransfer.getData("text/plain");
+      const targetId = row.dataset.dragItem;
+      const nextItems = reorderChecklistItem(state.items, draggedId, targetId);
+      commit({
+        ...state,
+        items: nextItems,
+        session: normalizeSession(state.session, nextItems),
+      }, { reopenSettings: true });
+    });
+
+    root.addEventListener("dragend", (event) => {
+      const row = event.target.closest("[data-drag-item]");
+      if (row) row.classList.remove("dragging");
     });
 
     root.addEventListener("click", (event) => {
@@ -997,6 +1347,7 @@
           history: imported.history,
           active: typeof imported.active === "boolean" ? imported.active : false,
           theme: imported.theme === "dark" ? "dark" : "light",
+          items: normalizeChecklistItems(imported.items),
         });
       } catch (error) {
         alert("백업 코드가 올바르지 않아요.");
@@ -1009,10 +1360,15 @@
   const api = {
     ATTEMPTS,
     UI_COPY,
+    addChecklistItem,
     completeActiveSession,
     createAppState,
     createSession,
+    getVisibleAttempts,
+    normalizeChecklistItems,
     normalizeSession,
+    reorderChecklistItem,
+    setChecklistItemHidden,
     startSession,
     toggleThemeValue,
     toggleAttempt,
